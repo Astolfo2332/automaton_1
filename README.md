@@ -7,7 +7,6 @@ Project created with MLOps-Template cookiecutter. For more info: https://mlopsst
 
 * DVC
 * Python3 and pip
-* Access to IBM Cloud Object Storage
 
 ## 🏃🏻 Running Project
 
