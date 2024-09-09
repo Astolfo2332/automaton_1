@@ -65,3 +65,4 @@ data/
 .github
 
 notebooks/output.csv
+notebooks/error.csv
