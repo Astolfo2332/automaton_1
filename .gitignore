@@ -68,3 +68,6 @@ notebooks/output.csv
 notebooks/error.csv
 
 models/
+
+*.csv
+*.xlsx

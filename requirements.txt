@@ -5,5 +5,3 @@ joblib
 numpy
 pyyaml
 pytest
-pytest-dependency
-pre-commit

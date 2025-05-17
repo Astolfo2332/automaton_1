@@ -1,8 +1,13 @@
 import os
-from pdf2image import convert_from_path
-from PIL import Image
+from io import BytesIO
+import base64
 
-SERVER = "http://192.168.0.106:8000/data/pdfs/"
+import pandas as pd
+from pdf2image import convert_from_path
+from pdf2image.exceptions import PDFPageCountError
+from PIL import Image
+import numpy as np
+
 
 class BytesImageDataset:
     def __init__(self, image_bytes_list, transform=None):
@@ -36,27 +41,52 @@ def merge_images_vertically(images):
 
     return merged_img
 
+def convert_pdf_to_single_image(row:pd.Series) -> Image.Image or None:
+    file =  row["FILE_NAME"] + ".pdf"
+    main = os.path.join(os.getcwd(), "data", "extracted", file)
+    if not os.path.exists(main):
+        return None
 
+    try:
+        image = convert_from_path(main, thread_count=32)
+    except PDFPageCountError:
+        return None
+    # image = (merge_images_vertically(image))
+
+    return image
 
 def convert_pdf_to_images(pdf_path:str) -> list:
     images = []
-
     # Convert PDF to images
     for file in os.listdir(pdf_path):
         if file.endswith('.pdf'):
             image = convert_from_path(os.path.join(pdf_path, file), thread_count=32)
-            images.append((merge_images_vertically(image), SERVER + os.path.basename(file)))
-            images[0].show()
-            break
-
+            # images.append((merge_images_vertically(image), SERVER + os.path.basename(file)))
     return images
 
-def make_pdf_dataset(pdf_path:str) -> BytesImageDataset:
-    print("[INFO] Loading PDF files from path:", pdf_path)
 
+def convert_img_to_bytes(image:list[Image.Image]) -> list[str]:
+    conv_img = []
+    for img in image:
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        img_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        conv_img.append(img_b64)
+    return conv_img
+
+def make_pdf_dataset(pdf_path:str) -> list[str]:
+    print("[INFO] Loading PDF files from path:", pdf_path)
     images = convert_pdf_to_images(pdf_path)
-    dataset = BytesImageDataset(images)
+    dataset = [convert_img_to_bytes(img) for img in images]
     print("[INFO] PDF files loaded successfully.")
+
+    return dataset
+
+def make_pdf_bytes(row:pd.Series) -> list[str]or None:
+    images = convert_pdf_to_single_image(row)
+    if images is None:
+        return np.nan
+    dataset = convert_img_to_bytes(images)
 
     return dataset
 
