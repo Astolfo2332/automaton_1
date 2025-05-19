@@ -71,3 +71,4 @@ models/
 
 *.csv
 *.xlsx
+.idea

@@ -20,6 +20,7 @@ Act as an OCR assistant extract all text from this image in spanish **exactly as
     - **Do not include any additional text, explanations, or interpretations** outside the table.
     - **Do not add any extra information** or context outside the table.
     - dont include large strings as cufe number or qr codes
+    - **Do not repeat the same information in different formats.**
     - The Most important values are, dates, nit, invoice number, subtotal, total, iva and provider name
 """
 

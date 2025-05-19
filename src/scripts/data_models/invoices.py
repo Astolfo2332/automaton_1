@@ -2,7 +2,7 @@ from pydantic import BaseModel, field_validator, Field
 from datetime import datetime, date
 
 class Invoice(BaseModel):
-    fecha: str = Field(description="Fecha del creación de la factura")
+    fecha: str = Field(description="Fecha del creación de la factura en formato DD/MM/YYYY")
     proveedor: str = Field(description="Nombre del proveedor o emisor de la factura, No es Armando Lopez")
     nit: int = Field(description="NIT del proveedor o emisor de la factura")
     numero_factura: str = Field(description="Número de la factura")

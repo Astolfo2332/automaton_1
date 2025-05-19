@@ -12,7 +12,7 @@ class DatabaseConfig:
         self.bills_table = Table(
             'bills',
             self.metadata,
-            Column('id', Integer, primary_key=True),
+            Column('id', Integer, primary_key=True, autoincrement=True),
             Column('FILE_NAME', String(255)),
             Column('VALOR_ANTES_DE_IVA', Float),
             Column('IVA', Float),
@@ -23,14 +23,22 @@ class DatabaseConfig:
             Column('FILE', VARCHAR(255)),
             Column('CHECK', String(255)),
             Column('FECHA', Date),
-            Column('NIT', String(255)),
+            Column('NIT', String(255))
         )
 
         self.already_analice_table = Table(
             'already_analice',
             self.metadata,
-            Column('id', Integer, primary_key=True),
+            Column('id', Integer, primary_key=True, autoincrement=True),
             Column('FILE_NAMES', String(500))
+        )
+
+        self.ocr_data_table = Table(
+            'ocr_data',
+            self.metadata,
+            Column('id', Integer, primary_key=True, autoincrement=True),
+            Column('FILE_NAME', String(255)),
+            Column('OCR_TEXT', String(1000000))
         )
 
 

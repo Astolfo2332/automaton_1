@@ -4,7 +4,7 @@ import ollama
 from langchain_ollama import ChatOllama
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
-from ollama_ocr import OCRProcessor
+# from ollama_ocr import OCRProcessor
 from dotenv import load_dotenv
 
 
@@ -52,10 +52,11 @@ def query_model_ocr(img:list[str]) -> str:
     return text
 
 def query_model_ocr_ollama(path:str) -> str:
-    ocr = OCRProcessor(model_name=os.getenv("VISION_MODEL"))
-    result = ocr.process_image(path, language="Español", format_type="table")
+    # ocr = OCRProcessor(model_name=os.getenv("VISION_MODEL"))
+    # result = ocr.process_image(path, language="Español", format_type="table")
+    pass
 
-    return result
+    # return result
 
 def query_model_structured(ocr_response:str) -> Invoice:
     #structured

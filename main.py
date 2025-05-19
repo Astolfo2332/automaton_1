@@ -9,6 +9,7 @@ from src.scripts.utils.make_queries import fill_dataframe_with_model_response, f
 from src.scripts.extraction_and_df import extract_and_create_df
 from src.scripts.db.controller.search import search_file
 from src.scripts.utils.process_images import image_process
+from src.scripts.db.controller.create import sync_all_tables
 
 def read_xml_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -16,6 +17,7 @@ def read_xml_file(file_path):
     return content
 
 def main():
+    sync_all_tables()
     tqdm.pandas()
     main_path = os.getcwd().replace("\\", "/")
 

@@ -75,7 +75,7 @@ def fill_pdf_only_bills(all_pdfs:list, df:pd.DataFrame) -> pd.DataFrame:
         row = all_queries_ocr(row)
         row["FACTURA"] = get_alpha_numeric_string(row["FACTURA"])
         num_factura = str(row["FACTURA"].lower())
-        if not search_bill(num_factura):
+        if search_bill(num_factura):
             continue
         df.loc[len(df)] = row
 

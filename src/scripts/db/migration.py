@@ -1,7 +1,7 @@
 import os
 import json
 import pandas as pd
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from src.scripts.db.db_schema import DatabaseConfig
 
@@ -55,6 +55,11 @@ def migrate_info():
         # Insert data into the bills table
         try:
             bills_df.to_sql('bills', conn, if_exists='append', index=False)
+
+            #Fix de errores de secuencia
+            conn.execute(text("""
+                              SELECT setval('bills_id_seq', COALESCE((SELECT MAX(id) FROM ocr_data), 1));
+                              """))
             conn.commit()
             print("Data migrated successfully.")
         except SQLAlchemyError as e:
@@ -74,6 +79,16 @@ def migrate_info():
         except SQLAlchemyError as e:
             print(f"Error migrating data: {e}")
 
+        ocr_data = pd.read_excel(os.path.join(main, "data", "ocr_data.xlsx"))
+
+        try:
+            ocr_data.to_sql('ocr_data', conn, if_exists='append', index=False)
+            conn.execute(text("""
+            SELECT setval('ocr_data_id_seq', COALESCE((SELECT MAX(id) FROM ocr_data), 1));
+            """))
+            print("Data migrated successfully.")
+        except SQLAlchemyError as e:
+            print(f"Error migrating data: {e}")
 
         # Close the connection
         conn.close()
