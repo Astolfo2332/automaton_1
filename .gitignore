@@ -72,3 +72,4 @@ models/
 *.csv
 *.xlsx
 .idea
+.vscode

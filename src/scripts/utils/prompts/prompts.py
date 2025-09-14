@@ -45,3 +45,4 @@ subtotal_prompt = """Cual es el subtotal o valor antes de iva de la factura:"""
 proveedor_prompt = """Cual es el nombre del proveedor o emisor de la factura: 
 Ten en cuenta que puede estar el nombre del cliente pero no es el correcto"""
 
+user_prompt_ocr_mk = """Extrae todo el texto de la imagen en formato markdown"""

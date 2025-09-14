@@ -9,7 +9,10 @@ from dotenv import load_dotenv
 
 
 from src.scripts.data_models.invoices import Invoice
-from src.scripts.utils.prompts.prompts import system_prompt, system_prompt_ocr, system_prompt_ocr_mk, system_prompt_xml
+from src.scripts.utils.prompts.prompts import (system_prompt,
+system_prompt_ocr, system_prompt_ocr_mk, system_prompt_xml,
+                                               user_prompt_ocr_mk)
+from src.scripts.utils.transformers_process import TransformersLLM, prompt_for_transformers_ocr
 import json
 load_dotenv()
 
@@ -34,12 +37,12 @@ def query_model(img:str, prompt:str) -> str:
 def query_model_ocr(img:list[str]) -> str:
     text = ""
     model = OllamaLLM(model=os.getenv("VISION_MODEL"), temperature=0.0)
+
+    prompt_ocr = ChatPromptTemplate.from_messages([
+        ("system", system_prompt_ocr_mk)
+    ])
     for k, i in enumerate(img):
         text += f"Page N {k + 1}\n"
-        prompt_ocr = ChatPromptTemplate.from_messages([
-            ("system", system_prompt_ocr)
-        ])
-
         formated_prompt = prompt_ocr.format_messages()
         #ocr
         model_with_image = model.bind(images=[i])
@@ -50,6 +53,17 @@ def query_model_ocr(img:list[str]) -> str:
     # print("OCR response: ", text)
 
     return text
+
+def query_model_ocr_transformers(img:list[str]) -> str:
+    model_name = "nanonets/Nanonets-OCR-s"
+    llm = TransformersLLM(model_name=model_name)
+    prompt_ocr = prompt_for_transformers_ocr(system_prompt_ocr_mk, user_prompt_ocr_mk)
+
+    text = ""
+    for k, i in enumerate(img):
+        text += f"Page N {k + 1}\n"
+        response = llm.generate(prompt_ocr, image=i)
+        text += response + "\n"
 
 def query_model_ocr_ollama(path:str) -> str:
     # ocr = OCRProcessor(model_name=os.getenv("VISION_MODEL"))
