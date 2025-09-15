@@ -54,16 +54,21 @@ def query_model_ocr(img:list[str]) -> str:
 
     return text
 
-def query_model_ocr_transformers(img:list[str]) -> str:
-    model_name = "nanonets/Nanonets-OCR-s"
-    llm = TransformersLLM(model_name=model_name)
-    prompt_ocr = prompt_for_transformers_ocr(system_prompt_ocr_mk, user_prompt_ocr_mk)
+model_name = "nanonets/Nanonets-OCR-s"
+llm_nanonets = TransformersLLM(model_name=model_name)
 
+def query_model_ocr_transformers(img:list[str]) -> str:
+    if not llm_nanonets.model_loaded:
+        llm_nanonets.load_model(model_name)
+
+    prompt_ocr = prompt_for_transformers_ocr(system_prompt_ocr_mk, user_prompt_ocr_mk)
     text = ""
     for k, i in enumerate(img):
         text += f"Page N {k + 1}\n"
-        response = llm.generate(prompt_ocr, image=i)
+        response = llm_nanonets.generate(prompt_ocr, image=i)
         text += response + "\n"
+
+    return text
 
 def query_model_ocr_ollama(path:str) -> str:
     # ocr = OCRProcessor(model_name=os.getenv("VISION_MODEL"))
@@ -91,9 +96,3 @@ def query_model_structure_xml(xml:str) -> Invoice:
     response = model_structured.invoke(prompt.format_messages())
 
     return response
-
-if __name__ == "__main__":
-    # Test the function with a sample image
-    img = ""
-    response = query_model_estructured(img, "cual es el valor total?")
-    print(response)

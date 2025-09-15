@@ -11,6 +11,7 @@ class TransformersLLM:
             attn_implementation="flash_attention_2"
         )
         self.model.eval()
+        self.model_loaded = True
 
     def generate(self, inputs, **kwargs) -> str:
         text = self.processor.apply_chat_template(inputs, tokenize=False, add_generation_prompt=True)
@@ -28,8 +29,21 @@ class TransformersLLM:
         output_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
         return output_text[0]
 
+    def unload_model(self):
+        del self.model
+        del self.processor
+        del self.tokenizer
+        import torch
+        torch.cuda.empty_cache()
+        self.model_loaded = False
+
+    def load_model(self, model_name: str):
+        self.__init__(model_name)
+        self.model_loaded = True
+
 def prompt_for_transformers_ocr(system_prompt_ocr_mk: str, user_prompt_ocr_mk: str):
-    return {
+
+    data = [
         {
             "role": "system", "content": system_prompt_ocr_mk
         },
@@ -39,4 +53,6 @@ def prompt_for_transformers_ocr(system_prompt_ocr_mk: str, user_prompt_ocr_mk: s
             {"type": "text", "text": user_prompt_ocr_mk}
         ]
         }
-    }
+    ]
+
+    return data

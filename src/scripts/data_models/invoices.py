@@ -2,13 +2,13 @@ from pydantic import BaseModel, field_validator, Field
 from datetime import datetime, date
 
 class Invoice(BaseModel):
-    fecha: str = Field(description="Fecha del creación de la factura en formato DD/MM/YYYY")
-    proveedor: str = Field(description="Nombre del proveedor o emisor de la factura, No es Armando Lopez")
-    nit: int = Field(description="NIT del proveedor o emisor de la factura")
-    numero_factura: str = Field(description="Número de la factura")
-    antes_iva: float = Field(description="Valor total antes de IVA o subtotal")
-    iva: float = Field(description="Valor total del IVA")
-    valor_total: float = Field(description="Valor total de la factura")
+    fecha: str = Field(description="Fecha del creación de la factura en formato DD/MM/YYYY", default=None)
+    proveedor: str = Field(description="Nombre del proveedor o emisor de la factura, No es Armando Lopez", default=None)
+    nit: int = Field(description="NIT del proveedor o emisor de la factura", default=None)
+    numero_factura: str = Field(description="Número de la factura", default=None)
+    antes_iva: float = Field(description="Valor total antes de IVA o subtotal", default=None)
+    iva: float = Field(description="Valor total del IVA", default=None)
+    valor_total: float = Field(description="Valor total de la factura", default=None)
 
     # @field_validator('fecha', mode='before')
     # @classmethod

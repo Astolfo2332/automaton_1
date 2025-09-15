@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from dotenv import load_dotenv
-from src.scripts.utils.ask_a_model import query_model, query_model_ocr, query_model_structured, query_model_ocr_ollama, query_model_structure_xml
+from src.scripts.utils.ask_a_model import (query_model, query_model_ocr,
+query_model_structured, query_model_ocr_ollama,
+query_model_structure_xml, query_model_ocr_transformers, llm_nanonets)
 from src.scripts.utils.prompts.prompts import *
 from src.scripts.utils.pdf_loader import make_pdf_bytes
 from src.scripts.utils.bill_parser import get_alpha_numeric_string
@@ -21,7 +23,10 @@ def fill_dataframe_with_model_response(df:pd.DataFrame, bills_df:pd.DataFrame) -
 
     print("Ocr pdfs\n")
     print("-"*50)
-    df["ocr"] = df.progress_apply(lambda x: query_model_ocr(x["bytes"]), axis=1)
+    df["ocr"] = df.progress_apply(lambda x: query_model_ocr_transformers(x["bytes"]), axis=1)
+
+    llm_nanonets.unload_model()
+
     for idx, row in tqdm(df.iterrows(), total=len(df), desc="Filling dataframe with model response", unit="row"):
         # bills_df.loc[idx] = queries_for_model(row)
         bills_df.loc[idx] = queries_for_model_from_ocr(row)
@@ -66,10 +71,12 @@ def fill_pdf_only_bills(all_pdfs:list, df:pd.DataFrame) -> pd.DataFrame:
         row["bytes"] = make_pdf_bytes(row)
         if row["bytes"] is np.nan:
             continue
-        row["ocr"] = query_model_ocr(row["bytes"])
+        row["ocr"] = query_model_ocr_transformers(row["bytes"])
         server_file = SERVER + os.path.basename(pdf)
         row["FILE"] = f'=HYPERLINK("{server_file}", "link")'
         ocr_pdf.append(row)
+
+    llm_nanonets.unload_model()
 
     for row in tqdm(ocr_pdf, desc="Filling PDF only bills", unit="pdf"):
         row = all_queries_ocr(row)
