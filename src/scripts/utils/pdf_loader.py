@@ -42,6 +42,7 @@ def merge_images_vertically(images):
     return merged_img
 
 def convert_pdf_to_single_image(row:pd.Series) -> Image.Image or None:
+    """Convierte un pdf a imagenes separados por pagina en una lista"""
     file =  row["FILE_NAME"] + ".pdf"
     main = os.path.join(os.getcwd(), "data", "extracted", file)
     if not os.path.exists(main):
@@ -56,12 +57,14 @@ def convert_pdf_to_single_image(row:pd.Series) -> Image.Image or None:
     return image
 
 def convert_pdf_to_images(pdf_path:str) -> list:
+    """Deprecado"""
     images = []
     # Convert PDF to images
     for file in os.listdir(pdf_path):
         if file.endswith('.pdf'):
             image = convert_from_path(os.path.join(pdf_path, file), thread_count=32)
             # images.append((merge_images_vertically(image), SERVER + os.path.basename(file)))
+            images.append(image)
     return images
 
 
