@@ -9,6 +9,8 @@ def update_bill(bill:pd.Series):
 
     bill = bill.to_dict()
     bill["FECHA"] = pd.to_datetime(bill["FECHA"], format="mixed", dayfirst=True).date()
+    bill["VALOR_ANTES_DE_IVA"] = bill["VALOR ANTES DE IVA"]
+    del bill["VALOR ANTES DE IVA"]
 
     engine = create_db_connection()
     conn = engine.connect()

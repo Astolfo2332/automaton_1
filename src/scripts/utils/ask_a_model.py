@@ -36,7 +36,7 @@ def query_model(img:str, prompt:str) -> str:
 
 def query_model_ocr(img:list[str]) -> str:
     text = ""
-    model = OllamaLLM(model=os.getenv("VISION_MODEL"), temperature=0.0)
+    model = OllamaLLM(model=os.getenv("VISION_MODEL"), temperature=0.0, num_predict=15000)
 
     prompt_ocr = ChatPromptTemplate.from_messages([
         ("system", system_prompt_ocr_mk)
@@ -54,10 +54,10 @@ def query_model_ocr(img:list[str]) -> str:
 
     return text
 
-model_name = "nanonets/Nanonets-OCR-s"
-llm_nanonets = TransformersLLM(model_name=model_name)
-
 def query_model_ocr_transformers(img:list[str]) -> str:
+    model_name = "nanonets/Nanonets-OCR-s"
+    llm_nanonets = TransformersLLM(model_name=model_name)
+
     if not llm_nanonets.model_loaded:
         llm_nanonets.load_model(model_name)
 
