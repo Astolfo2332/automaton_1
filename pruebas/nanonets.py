@@ -1,9 +1,33 @@
 from transformers import AutoModelForImageTextToText, AutoTokenizer, AutoProcessor
 from PIL import Image
 import os
+from pruebas.base_ocr_model import BaseOcrModel
 
-os.environ["FLASH_ATTENTION_TRITON_AMD_ENABLE"] = "TRUE"
 os.environ["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1"
+
+class NanonetsOCRManager(BaseOcrModel):
+    def __init__(self):
+        super().__init__()
+        self.model = None
+        self.processor = None
+        self.tokenizer = None
+
+    def start(self):
+        if self.model is None or self.processor is None or self.tokenizer is None:
+            self.model, self.processor, self.tokenizer = load_nanonets_s_model()
+
+    def process(self, image_path: str, max_new_tokens=4096) -> str:
+        if self.model is None or self.processor is None or self.tokenizer is None:
+            raise ValueError("Model, processor, and tokenizer must be initialized. Call start() before process().")
+
+        return ocr_page_with_nanonets_s(image_path, self.model, self.processor, max_new_tokens)
+
+    def delete(self):
+        del self.model
+        del self.processor
+        del self.tokenizer
+        import torch
+        torch.cuda.empty_cache()
 
 
 def load_nanonets_s_model():
@@ -12,7 +36,7 @@ def load_nanonets_s_model():
         model_path,
         torch_dtype="auto",
         device_map="auto",
-        attn_implementation="flash_attention_2"
+        # attn_implementation="flash_attention_2"
     )
     model.eval()
 
@@ -44,10 +68,10 @@ def ocr_page_with_nanonets_s(image_path, model, processor, max_new_tokens=4096):
 def main():
     import time
     main = os.getcwd().split("pruebas")[0]
-    image_file = '0ab3ad91a7274a6057a9d5c60b62eba2a51b541ce3c08af35517012a3f44eb8bc58d204f819c456fb0e60cb116767d8d_page_{page}.jpg'
-    pages = [1, 2]
+    image_file = 'fv090042726300825000021c9_page_{page}.jpg'
+    pages = [1]
+    model, processor, tokenizer = load_nanonets_s_model()
     for page in pages:
-        model, processor, tokenizer = load_nanonets_s_model()
         print(f"Processing page {page}")
         image_file_page = image_file.format(page=page)
     #     image_file_page = image_file
@@ -56,8 +80,8 @@ def main():
         result = ocr_page_with_nanonets_s(image_file_path, model, processor, max_new_tokens=15000)
         end_time = time.time()
         print(f"Time taken for page: {end_time - start_time} seconds")
-        # print(f"OCR Result for page {page}:\n", result)
-        print(f"OCR Result:\n", result)
+        print(f"OCR Result for page {page}:\n", result)
+        # print(f"OCR Result:\n", result)
 
 if __name__ == "__main__":
     import time
