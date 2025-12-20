@@ -1,16 +1,15 @@
 import pandas as pd
 import os
-import mlflow
 from tqdm.auto import tqdm
 
 from time import time
-from pruebas.base_ocr_model import BaseOcrModel
-from pruebas.huyuan_ocr import HuyuanOCRManager
-from pruebas.deepseek_ollama import DeepseekOllamaManager
-from pruebas.mineru_2_5 import MineruManager
-from pruebas.nanonets import NanonetsOCRManager
-from pruebas.qwen_2_5_vl import Qwen25vlManager
-from pruebas.paddle import PaddleOCRManager
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
+from tests.llm_ocr_models.huyuan_ocr import HuyuanOCRManager
+from tests.llm_ocr_models.deepseek_ollama import DeepseekOllamaManager
+from tests.llm_ocr_models.mineru_2_5 import MineruManager
+from tests.llm_ocr_models.nanonets import NanonetsOCRManager
+from tests.llm_ocr_models.qwen_vl import (Qwen25VlTransformersManager)
+from tests.llm_ocr_models.gemini import GeminiManager
 
 from dotenv import load_dotenv
 
@@ -22,10 +21,13 @@ class ModelIterator:
         self.models = {
             "HuyuanOCR": HuyuanOCRManager(),
             "DeepseekOllama": DeepseekOllamaManager(),
+            "Gemini": GeminiManager(),
             "Mineru2.5": MineruManager(),
             "NanonetsOCR": NanonetsOCRManager(),
-            "Qwen2.5VL": Qwen25vlManager(),
-            "PaddleOCR": PaddleOCRManager()
+            "Qwen2.5VL": Qwen25VlTransformersManager(),
+            # "PaddleOCR": PaddleOCRManager(),
+            # "Qwen3VLThink": QwenVlTransformersManager()
+            # "Qwen3VL": QwenVlTransformersManager("Qwen/Qwen3-VL-8B-Instruct")
         }
 
         self.current_model = None
@@ -79,6 +81,8 @@ def process_dataset(model: BaseOcrModel,
     print("Starting model...")
     model.start()
 
+    main_path = os.getcwd().split("testing")[0]
+
     for index, data in tqdm(test_df.iterrows(), total=len(test_df),
                             desc=f"Processing dataset with {model_name}",
                             unit="file"):
@@ -97,7 +101,9 @@ def process_dataset(model: BaseOcrModel,
         ocr_text = ""
 
         for ass_file_name in associated_files:
-            file_path = os.path.join("../data/test_dataset_pdfs", ass_file_name)
+            file_path = os.path.join(main_path,
+                                     "data", "test_dataset_pdfs",
+                                     ass_file_name)
 
             start_time = time()
             ocr_text_extraction = model.process(file_path)

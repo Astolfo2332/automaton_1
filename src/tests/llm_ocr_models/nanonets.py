@@ -1,15 +1,13 @@
 from transformers import AutoModelForImageTextToText, AutoTokenizer, AutoProcessor
 from PIL import Image
 import os
-from pruebas.base_ocr_model import BaseOcrModel
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
 
 os.environ["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1"
 
 class NanonetsOCRManager(BaseOcrModel):
     def __init__(self):
         super().__init__()
-        self.model = None
-        self.processor = None
         self.tokenizer = None
 
     def start(self):
@@ -67,7 +65,7 @@ def ocr_page_with_nanonets_s(image_path, model, processor, max_new_tokens=4096):
 
 def main():
     import time
-    main = os.getcwd().split("pruebas")[0]
+    main = os.getcwd().split("llm_ocr_models")[0]
     image_file = 'fv090042726300825000021c9_page_{page}.jpg'
     pages = [1]
     model, processor, tokenizer = load_nanonets_s_model()

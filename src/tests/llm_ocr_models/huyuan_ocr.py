@@ -2,7 +2,7 @@ from transformers import AutoProcessor
 from transformers import HunYuanVLForConditionalGeneration
 from PIL import Image
 import torch
-from pruebas.base_ocr_model import BaseOcrModel
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
 
 def clean_repeated_substrings(text):
     """Clean repeated substrings in text"""
@@ -27,7 +27,6 @@ class HuyuanOCRManager(BaseOcrModel):
     def __init__(self):
         super().__init__()
         self.model_name_or_path = "tencent/HunyuanOCR"
-        self.processor = None
         self.recommended_prompt = """
 • Identify the formula in the image and represent it using LaTeX format.
 
@@ -38,7 +37,6 @@ class HuyuanOCRManager(BaseOcrModel):
 • Extract all information from the main body of the document image and represent it in markdown format, ignoring headers and footers. Tables should be expressed in HTML format, formulas in the document should be represented using LaTeX format, and the parsing should be organized according to the reading order.
 """
 
-        self.model = None
 
     def start(self):
         if self.model is None or self.processor is None:

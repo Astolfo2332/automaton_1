@@ -15,7 +15,7 @@ model = AutoModel.from_pretrained(model_name,
 model = model.eval().cuda().to(torch.bfloat16)
 
 # prompt = "<image>\nFree OCR. "
-main = os.getcwd().split("pruebas")[0]
+main = os.getcwd().split("llm_ocr_models")[0]
 prompt = "<image>\nFree OCR"
 
 image_file = '0ab3ad91a7274a6057a9d5c60b62eba2a51b541ce3c08af35517012a3f44eb8bc58d204f819c456fb0e60cb116767d8d_page_2.jpg'

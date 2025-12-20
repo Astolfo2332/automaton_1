@@ -2,20 +2,19 @@ from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 from PIL import Image
 from mineru_vl_utils import MinerUClient
 
-from pruebas.base_ocr_model import BaseOcrModel
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
+
 
 class MineruManager(BaseOcrModel):
     def __init__(self):
         super().__init__()
-        self.model = None
-        self.processor = None
         self.client = None
 
     def start(self):
         if self.model is None or self.processor is None or self.client is None:
             self.model = Qwen2VLForConditionalGeneration.from_pretrained(
                 "opendatalab/MinerU2.5-2509-1.2B",
-                dtype="auto", # use `torch_dtype` instead of `dtype` for transformers<4.56.0
+                dtype="auto",
                 device_map="auto"
             )
 

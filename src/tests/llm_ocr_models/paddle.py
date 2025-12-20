@@ -1,5 +1,4 @@
-from pruebas.base_ocr_model import BaseOcrModel
-import torch
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
 from transformers import AutoModelForCausalLM, AutoProcessor
 from PIL import Image
 
@@ -7,8 +6,6 @@ class PaddleOCRManager(BaseOcrModel):
     def __init__(self):
         super().__init__()
         self.model_name_or_path = "PaddlePaddle/PaddleOCR-VL"
-        self.processor = None
-        self.model = None
         self.prompts = {
             "ocr": "OCR:",
             "table": "Table Recognition:",
@@ -18,12 +15,17 @@ class PaddleOCRManager(BaseOcrModel):
 
     def start(self):
         if self.model is None or self.processor is None:
-            self.processor = AutoProcessor.from_pretrained(self.model_name_or_path)
+            self.processor = AutoProcessor.from_pretrained(
+                self.model_name_or_path,
+                trust_remote_code=True,
+                use_fast=True
+            )
 
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name_or_path,
-                torch_dtype="auto",
-                device_map="auto"
+                dtype="auto",
+                device_map="auto",
+                trust_remote_code=True,
             )
 
     def process(self, image_file: str) -> str:
