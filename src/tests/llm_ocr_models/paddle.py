@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
 from transformers import AutoModelForCausalLM, AutoProcessor
 from PIL import Image
@@ -28,7 +30,7 @@ class PaddleOCRManager(BaseOcrModel):
                 trust_remote_code=True,
             )
 
-    def process(self, image_file: str) -> str:
+    def process(self, image_file: str) -> tuple[str, float]:
         if self.model is None or self.processor is None:
             raise ValueError("Model and processor must be initialized. Call start() before process().")
 
@@ -56,7 +58,7 @@ class PaddleOCRManager(BaseOcrModel):
         outputs = self.processor.batch_decode(outputs,
                                               skip_special_tokens=True)[0]
 
-        return outputs
+        return outputs, 0.5
 
     def delete(self):
         del self.model

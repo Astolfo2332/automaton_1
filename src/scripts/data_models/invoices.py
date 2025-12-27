@@ -10,14 +10,6 @@ class Invoice(BaseModel):
     iva: float = Field(description="Valor total del IVA")
     valor_total: float = Field(description="Valor total de la factura")
 
-    # @field_validator('fecha', mode='before')
-    # @classmethod
-    # def validate_date(cls, v):
-    #     if isinstance(v, date):
-    #         return v.strftime('%d-%m-%Y')
-    #
-    #     date_v = datetime.strptime(v, '%Y-%m-%d')
-    #     return date_v.strftime('%d/%m/%Y')
 
 
 if __name__ == "__main__":

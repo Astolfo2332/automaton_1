@@ -1,6 +1,8 @@
 from transformers import AutoModelForImageTextToText, AutoTokenizer, AutoProcessor
 from PIL import Image
 import os
+
+from tests.cost_manager.all_cost_manager import cost_manager
 from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
 
 os.environ["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1"
@@ -14,7 +16,7 @@ class NanonetsOCRManager(BaseOcrModel):
         if self.model is None or self.processor is None or self.tokenizer is None:
             self.model, self.processor, self.tokenizer = load_nanonets_s_model()
 
-    def process(self, image_path: str, max_new_tokens=4096) -> str:
+    def process(self, image_path: str, max_new_tokens=4096) -> tuple[str, float]:
         if self.model is None or self.processor is None or self.tokenizer is None:
             raise ValueError("Model, processor, and tokenizer must be initialized. Call start() before process().")
 
@@ -54,13 +56,22 @@ def ocr_page_with_nanonets_s(image_path, model, processor, max_new_tokens=4096):
     ]
     text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     inputs = processor(text=[text], images=[image], padding=True, return_tensors="pt")
+
+    inputs_tokens = len(inputs.input_ids[0])
+
     inputs = inputs.to(model.device)
 
     output_ids = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False)
     generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, output_ids)]
+    output_tokens = len(generated_ids[0])
 
     output_text = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-    return output_text[0]
+    total_cost = cost_manager.calculate_cost(
+        "nanonets",
+        inputs_tokens,
+        output_tokens
+    )
+    return output_text[0], total_cost
 
 
 def main():

@@ -2,9 +2,11 @@ from time import time
 import pandas as pd
 import os
 from tqdm.auto import tqdm
+import json
 
 from src.tests.llm_extraction_models.gemini_extractor import GeminiExtractor
 from src.tests.llm_extraction_models.ollama_extractor import OllamaExtractor
+from src.tests.llm_extraction_models.openai_extractor import OpenAIExtractor
 
 
 from dotenv import load_dotenv
@@ -18,10 +20,12 @@ class TestingExtractor:
         self.models = {
             "gpt_oss_20b": OllamaExtractor("gpt-oss:20b"),
             "qwen25_32b": OllamaExtractor("qwen2.5:32b"),
-            "deepseek_14b": OllamaExtractor("deepseek-r1:14b"),
+            "deepseek_32b": OllamaExtractor("deepseek-r1:32b"),
             "llama3_1_8b": OllamaExtractor("llama3.1:8b"),
-            "qwen3_14b": OllamaExtractor("qwen3:14b"),
-            "gemini_3_flash": GeminiExtractor()
+            "qwen3_32b": OllamaExtractor("qwen3:32b"),
+            "gemini_3_flash": GeminiExtractor(),
+            "gpt_5_1_medium": OpenAIExtractor("gpt-5.1"),
+            "gemini_3_pro": GeminiExtractor("gemini-3-pro-preview"),
         }
 
 def load_test_data(main: str, file_path:str) -> pd.DataFrame:
@@ -37,12 +41,12 @@ def make_a_test_extractor():
     ocr_files = [file for file in ocr_files if file.endswith(".csv")]
 
     for test in testers:
-        test_individual_model(test, tester.models[test],
+        run_test_individual_model(test, tester.models[test],
                                 main,
                                 ocr_files)
 
 
-def test_individual_model(model_name:str,
+def run_test_individual_model(model_name:str,
                             model_extractor,
                             main:str,
                             ocr_files:list):
@@ -50,18 +54,20 @@ def test_individual_model(model_name:str,
     os.makedirs(os.path.join(main, "data", "test_results", model_name), exist_ok=True)
 
     for ocr_file in ocr_files:
-        print("ocr file:", ocr_file)
         ocr_result_path = os.path.join(main, "data", "test_results", model_name, ocr_file)
         if os.path.isfile(ocr_result_path):
             results_df = pd.read_csv(ocr_result_path)
         else:
-            results_df = pd.DataFrame(columns=["FILE_NAME", "TIME_TAKEN", "EXTRACTION_RESULT"])
+            results_df = pd.DataFrame(columns=["FILE_NAME",
+                                               "TIME_TAKEN",
+                                               "EXTRACTION_RESULT",
+                                               "TOTAL_COST"])
 
         ocr_data_df = pd.read_csv(os.path.join(main, "data", "test_results", ocr_file))
 
-        test_dataset(ocr_result_path, model_extractor, results_df, ocr_data_df)
+        run_test_dataset(ocr_result_path, model_extractor, results_df, ocr_data_df)
 
-def test_dataset(ocr_result_path:str,
+def run_test_dataset(ocr_result_path:str,
                     model_extractor:BaseExtractor,
                     results_df:pd.DataFrame,
                     ocr_data_df:pd.DataFrame):
@@ -81,17 +87,22 @@ def test_dataset(ocr_result_path:str,
 
         ocr_text = row["OCR_TEXT"]
         start_time = time()
-        extraction_result = model_extractor.extract(ocr_text)
+        extraction_result, total_cost = model_extractor.extract(ocr_text)
         end_time = time()
         time_taken = end_time - start_time
+
+        extraction_result = json.dumps(extraction_result)
 
         results_df.loc[len(results_df)] = {
             "FILE_NAME": file_name,
             "TIME_TAKEN": time_taken,
-            "EXTRACTION_RESULT": extraction_result
+            "EXTRACTION_RESULT": extraction_result,
+            "TOTAL_COST": total_cost
         }
 
         results_df.to_csv(ocr_result_path, index=False)
+
+    print("Total cost for", ocr_result_path, ":", results_df["TOTAL_COST"].sum())
 
 if __name__ == "__main__":
     make_a_test_extractor()

@@ -1,15 +1,23 @@
 import os
+import outlines
+from outlines.inputs import Chat
+from outlines.inputs import Image as OutlinesImage
 
+from scripts.utils.prompts.prompts import user_extraction_prompt
 from src.scripts.utils.prompts.prompts import system_prompt_ocr_mk
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import OllamaLLM
 from PIL import Image
 from src.scripts.utils.pdf_loader import convert_img_to_bytes
-from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
+from tests.llm_ocr_models.base_ocr_model import BaseOcrModel, calculate_tokens
 from transformers import Qwen3VLForConditionalGeneration
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
+from src.tests.cost_manager.all_cost_manager import cost_manager
 
+from pydantic import BaseModel
+
+os.environ["TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL"] = "1"
 
 class QwenVlManager(BaseOcrModel):
     def __init__(self, model_name: str = None):
@@ -87,6 +95,45 @@ class Qwen25VlTransformersManager(BaseOcrModel):
         )
 
         return output_text[0]
+
+    def process_structured(self, image:list[str], structure:BaseModel) -> tuple[BaseModel, float]:
+        if self.model is None or self.processor is None:
+            raise ValueError("Model and processor must be initialized. Call start() before process().")
+
+        if self.model_structured is None:
+            self.model_structured = outlines.from_transformers(
+                self.model,
+                self.processor
+            )
+
+        images_list = [Image.open(img_path).convert("RGB") for img_path in image]
+        for img in images_list:
+            img.format = "PNG"
+
+        images_list = [OutlinesImage(img) for img in images_list]
+
+        prompt = Chat([
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": img} for img in images_list
+                ] + [
+                    {"type": "text", "text": user_extraction_prompt}
+                ]
+            }
+        ])
+
+        response = self.model_structured(prompt, output_type=structure)
+        input_tokens = calculate_tokens(str(prompt))
+        output_tokens = calculate_tokens(str(response.model_dump()))
+
+        total_cost = cost_manager.calculate_cost(
+            "qwen2.5:32b",
+            input_tokens,
+            output_tokens
+        )
+
+        return response, total_cost
 
     def delete(self):
         del self.model

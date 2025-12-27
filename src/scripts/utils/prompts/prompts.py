@@ -8,6 +8,16 @@ No incluyas bloques de código.
 No incluyas imports ni explicaciones.
 """
 
+user_ocr_prompt = """Perform Optical Character Recognition (OCR) on the following image data.
+Extract the text from the above document as if you were reading it naturally. Return the tables in html format. Return the equations in LaTeX representation. If there is an image in the document and image caption is not present, add a small description of the image inside the <img></img> tag; otherwise, add the image caption inside <img></img>. Watermarks should be wrapped in brackets. Ex: <watermark>OFFICIAL COPY</watermark>. Page numbers should be wrapped in brackets. Ex: <page_number>14</page_number> or <page_number>9/22</page_number>. Prefer using ☐ and ☑ for check boxes.
+ Review all the values carefully to ensure accuracy.
+ The most important requirements are:
+    - Dates
+    - Numbers
+    - Monetary amounts
+    - Bills Numbers and identifiers.
+"""
+
 user_extraction_prompt = """Extrae la siguiente información de la factura
 Todos los campos deben tener una respuesta. Cuando un valor no pueda ser determinado a partir del contenido, explica brevemente el motivo.
 Responde EXCLUSIVAMENTE con un JSON válido.

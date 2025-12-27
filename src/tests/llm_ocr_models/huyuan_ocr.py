@@ -3,6 +3,7 @@ from transformers import HunYuanVLForConditionalGeneration
 from PIL import Image
 import torch
 from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
+from tests.cost_manager.all_cost_manager import cost_manager
 
 def clean_repeated_substrings(text):
     """Clean repeated substrings in text"""
@@ -36,6 +37,7 @@ class HuyuanOCRManager(BaseOcrModel):
 
 • Extract all information from the main body of the document image and represent it in markdown format, ignoring headers and footers. Tables should be expressed in HTML format, formulas in the document should be represented using LaTeX format, and the parsing should be organized according to the reading order.
 """
+        self.cost_model_name = "HunyuanOCR"
 
 
     def start(self):
@@ -49,7 +51,7 @@ class HuyuanOCRManager(BaseOcrModel):
             device_map="auto"
             )
 
-    def process(self, image_file:str) -> str:
+    def process(self, image_file:str) -> tuple[str, float]:
 
         if self.model is None or self.processor is None:
             raise ValueError("Model and processor must be initialized. Call start() before process().")
@@ -79,6 +81,7 @@ class HuyuanOCRManager(BaseOcrModel):
             padding=True,
             return_tensors="pt",
         )
+        inputs_tokens = len(inputs["input_ids"][0])
 
         with torch.no_grad():
             device = next(self.model.parameters()).device
@@ -89,6 +92,9 @@ class HuyuanOCRManager(BaseOcrModel):
         else:
             print("inputs: # fallback", inputs)
             input_ids = inputs.inputs
+
+        output_tokens = generated_ids.shape[1] - inputs_tokens
+
         generated_ids_trimmed = [
             out_ids[len(in_ids):] for in_ids, out_ids in zip(input_ids, generated_ids)
         ]
@@ -101,7 +107,11 @@ class HuyuanOCRManager(BaseOcrModel):
         for t in raw_output_texts:
             output_texts += clean_repeated_substrings(t)
 
-        return output_texts
+        total_cost = cost_manager.calculate_cost(self.cost_model_name,
+                                                 inputs_tokens,
+                                                 output_tokens)
+
+        return output_texts, total_cost
 
     def delete(self):
         del self.model

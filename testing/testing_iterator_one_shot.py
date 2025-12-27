@@ -1,14 +1,13 @@
 import pandas as pd
 import os
 from tqdm.auto import tqdm
+import json
 
 from time import time
+
+from scripts.data_models.invoices import Invoice
 from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
-from tests.llm_ocr_models.huyuan_ocr import HuyuanOCRManager
-from tests.llm_ocr_models.deepseek_ollama import DeepseekOllamaManager
-from tests.llm_ocr_models.mineru_2_5 import MineruManager
-from tests.llm_ocr_models.nanonets import NanonetsOCRManager
-from tests.llm_ocr_models.qwen_vl import (Qwen25VlTransformersManager)
+from tests.llm_ocr_models.ollama_manager import OllamaManager
 from tests.llm_ocr_models.gemini import GeminiManager
 from tests.llm_ocr_models.openai_manager import OpenAIManager
 
@@ -20,16 +19,12 @@ load_dotenv()
 class ModelIterator:
     def __init__(self):
         self.models = {
-            "HuyuanOCR": HuyuanOCRManager(),
-            "DeepseekOllama": DeepseekOllamaManager(),
-            "Gemini": GeminiManager(),
-            "Mineru2.5": MineruManager(),
-            "NanonetsOCR": NanonetsOCRManager(),
-            "Qwen2.5VL": Qwen25VlTransformersManager(),
-            # "PaddleOCR": PaddleOCRManager(),
-            # "Qwen3VLThink": QwenVlTransformersManager(),
-            # "Qwen3VL": QwenVlTransformersManager("Qwen/Qwen3-VL-8B-Instruct"),
+            "Gemini_3_flash": GeminiManager(),
+            # "Qwen2.5VL": Qwen25VlTransformersManager(),
+            "Qwen2.5VL": OllamaManager("qwen2.5vl:latest"),
+            "Qwen2.5VL_32B": OllamaManager("qwen2.5vl:32b"),
             "Gpt_5_1_medium": OpenAIManager(model_name="gpt-5.1"),
+            # "Qwen_3VL": OllamaManager("qwen3-vl:30b"), #Ni en 30b es capaz de tener una salida correcta
             "Gemini_3_pro": GeminiManager(model_name="gemini-3-pro-preview"),
         }
 
@@ -53,13 +48,13 @@ def load_dataset():
 
     return df
 
-def make_a_test():
+def make_a_test_one_shot():
     model_iterator = ModelIterator()
     models_to_test = model_iterator.models.keys()
     test_files = os.listdir("../data/test_dataset_pdfs")
     test_files = [file for file in test_files if file.endswith(".jpg")]
     test_df = load_dataset()
-    os.makedirs("../data/test_results", exist_ok=True)
+    os.makedirs("../data/test_results_one_shot", exist_ok=True)
 
     for model_name in models_to_test:
         print(f"Testing model: {model_name}")
@@ -72,12 +67,12 @@ def process_dataset(model: BaseOcrModel,
                     model_name: str,
                     test_df: pd.DataFrame):
 
-    if os.path.exists("../data/test_results/" + model_name + "_results.csv"):
-        results_df = pd.read_csv("../data/test_results/" + model_name + "_results.csv")
+    if os.path.exists("../data/test_results_one_shot/" + model_name + "_results.csv"):
+        results_df = pd.read_csv("../data/test_results_one_shot/" + model_name + "_results.csv")
     else:
         results_df = pd.DataFrame(columns=["FILE_NAME",
                                            "EXTRACTION_TIME",
-                                           "OCR_TEXT",
+                                           "DATA_EXTRACTED",
                                            "TOTAL_COST"])
 
     if len(results_df) == len(test_df):
@@ -104,39 +99,41 @@ def process_dataset(model: BaseOcrModel,
             continue
 
         time_for_files = []
-        ocr_text = ""
         total_cost = 0.0
+        files = []
 
         for ass_file_name in associated_files:
             file_path = os.path.join(main_path,
                                      "data", "test_dataset_pdfs",
                                      ass_file_name)
+            files.append(file_path)
 
-            start_time = time()
-            ocr_text_extraction, page_cost = model.process(file_path)
-            end_time = time()
+        start_time = time()
+        data_extracted, page_cost = model.process_structured(files, Invoice)
+        end_time = time()
 
-            extraction_time = end_time - start_time
+        extraction_time = end_time - start_time
 
-            time_for_files.append(extraction_time)
-            total_cost += page_cost
+        time_for_files.append(extraction_time)
+        total_cost += page_cost
 
-            page = ass_file_name.split(file_name + "_")[1].replace(".jpg", "")
-            ocr_text += "<" +  page.capitalize() + ">" + "\n"
-            ocr_text += ocr_text_extraction + "\n"
-            ocr_text += "</" +  page.capitalize() + ">" + "\n"
+        if data_extracted is not None:
+            data_extracted = data_extracted.model_dump()
+            data_extracted = json.dumps(data_extracted)
+        else:
+            data_extracted = {}
 
         results_df.loc[len(results_df)] = {
             "FILE_NAME": data["FILE_NAME"],
             "EXTRACTION_TIME": time_for_files,
-            "OCR_TEXT": ocr_text,
+            "DATA_EXTRACTED": data_extracted,
             "TOTAL_COST": total_cost
         }
 
-        results_df.to_csv("../data/test_results/" + model_name + "_results.csv", index=False)
+        results_df.to_csv("../data/test_results_one_shot/" + model_name + "_results.csv", index=False)
 
     print("Total cost for", model_name, results_df["TOTAL_COST"].sum())
 
 
 if __name__ == "__main__":
-    make_a_test()
+    make_a_test_one_shot()
