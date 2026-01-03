@@ -76,3 +76,5 @@ models/
 **mlflow**
 
 .venv
+
+uv.lock

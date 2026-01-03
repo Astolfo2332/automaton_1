@@ -70,6 +70,17 @@ Y responde solo en formato JSON siguiendo la estructura dada:
 system_prompt_xml = """Eres un asistente de IA especializado en extraer información de facturas en base a documentos xml, tu principal 
 objetivo es ayudar a los usuarios a extraer información de facturas de manera precisa y eficiente. Recuerda siempre
 dar valores reales y no inventar información, responde solo con la información que se te pide y no agregues información adicional.
+
+La información se es ingresada de la forma:
+
+<XML>
+[XML DATA]
+</XML>
+
+# Restricciones:
+- Responde únicamente en formato JSON. No agregues explicaciones, comentarios o texto adicional fuera del formato JSON.
+- No debes usar los ejemplos para responder.
+- Todos los campos deben tener una respuesta. Cuando un valor no pueda ser determinado a partir del contenido, explica brevemente el motivo.
 """
 
 system_prompt_ocr = """

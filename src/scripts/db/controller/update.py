@@ -18,7 +18,7 @@ def update_bill(bill:pd.Series):
     if conn:
         # Update data in the bills table
         try:
-            query = db.bills_table.update().where(db.bills_table.c.FACTURA == bill["FACTURA"]).values(bill)
+            query = db.bills_table.update().where(db.bills_table.c.FILE_NAME == bill["FILE_NAME"]).values(bill)
             conn.execute(query)
             conn.commit()
         except Exception as e:

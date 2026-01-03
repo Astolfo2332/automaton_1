@@ -3,9 +3,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.messages import HumanMessage
 from pydantic import BaseModel
 
-from scripts.utils.prompts.prompts import user_extraction_prompt, system_prompt
-from tests.cost_manager.all_cost_manager import cost_manager
-from tests.llm_ocr_models.base_ocr_model import BaseOcrModel
+from scripts.utils.prompts.prompts import user_extraction_prompt, system_prompt, system_prompt_xml
+from src.scripts.utils.cost_manager.all_cost_manager import cost_manager
+from src.scripts.utils.llm_ocr_models.base_ocr_model import BaseOcrModel
 import base64
 
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -70,13 +70,7 @@ Extract the text from the above document as if you were reading it naturally. Re
         if self.model_structured is None:
             self.model_structured = self.model.with_structured_output(structure)
 
-        images = []
-        for img in image:
-            image_data = open(img, "rb").read()
-            image_b64 = base64.b64encode(image_data).decode("utf-8")
-            images.append(image_b64)
-
-        user_content = [{"type": "image", "base64": img_b64, "mime_type": "image/jpeg"} for img_b64 in images]+ [
+        user_content = [{"type": "image", "base64": img_b64, "mime_type": "image/jpeg"} for img_b64 in image]+ [
                     {"type": "text", "text": user_extraction_prompt}
                 ]
 
@@ -97,6 +91,79 @@ Extract the text from the above document as if you were reading it naturally. Re
                                   cb.total_tokens)
 
         return response, total_cost
+
+    def batch_structured_process(self, images:list[list[str]],
+                                 structure:type[BaseModel]) -> tuple[list[BaseModel], float]:
+        if self.cost_model_name == "":
+            raise ValueError("Cost model name is not defined.")
+
+        if self.model_structured is None:
+            self.model_structured = self.model.with_structured_output(structure)
+
+        all_request = []
+
+        print("Preparando mensajes...")
+        for image in images:
+            user_content = [{"type": "image", "base64": img_b64, "mime_type": "image/jpeg"} for img_b64 in image] + [
+                {"type": "text", "text": user_extraction_prompt}
+            ]
+
+            message = [
+                SystemMessage(
+                    content=system_prompt
+                ),
+                HumanMessage(
+                    content=user_content
+                )]
+
+            all_request.append(message)
+
+        print("Llamando al modelo para procesamiento")
+
+
+        with get_openai_callback() as cb:
+            response = self.model_structured.batch(all_request)
+
+        total_cost = cost_manager.calculate_cost(self.cost_model_name,
+                                                 cb.total_tokens,
+                                                 cb.total_tokens)
+
+        return response, total_cost
+
+    def batch_structured_process_xml(self, xmls:list[str],
+                                     structure:type[BaseModel]
+                                     ) -> tuple[list[type[BaseModel]], float]:
+        if self.cost_model_name == "":
+            raise ValueError("Cost model name is not defined.")
+
+        if self.model_structured is None:
+            self.model_structured = self.model.with_structured_output(structure)
+
+        all_request = []
+
+        print("Preparando mensajes...")
+        for xml in xmls:
+            message = [
+                SystemMessage(
+                    content=system_prompt_xml
+                ),
+                HumanMessage(
+                    content=f"Extrae la siguiente información de la factura xml: \n<XML>\n{xml}\n</XML>"
+                )]
+
+            all_request.append(message)
+
+        print("Llamando al modelo para procesamiento")
+
+        with get_openai_callback() as cb:
+            response = self.model_structured.batch(all_request)
+
+        total_cost = cost_manager.calculate_cost(self.cost_model_name,
+                                                 cb.total_tokens,
+                                                 cb.total_tokens)
+
+        return response, total_cost
+
 
 
 if __name__ == "__main__":

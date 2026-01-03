@@ -66,7 +66,7 @@ def add_a_ocr(file:str, ocr:str) -> None:
 def sync_all_tables() -> None:
     engine = create_db_connection()
     conn = engine.connect()
-    tables = ["bills", "already_analice", "ocr_data"]
+    tables = ["bills"]
     if conn:
         for table in tables:
             conn.execute(text(f"""

@@ -25,21 +25,3 @@ class DatabaseConfig:
             Column('FECHA', Date),
             Column('NIT', String(255))
         )
-
-        self.already_analice_table = Table(
-            'already_analice',
-            self.metadata,
-            Column('id', Integer, primary_key=True, autoincrement=True),
-            Column('FILE_NAMES', String(500))
-        )
-
-        self.ocr_data_table = Table(
-            'ocr_data',
-            self.metadata,
-            Column('id', Integer, primary_key=True, autoincrement=True),
-            Column('FILE_NAME', String(255)),
-            Column('OCR_TEXT', String(1000000))
-        )
-
-
-

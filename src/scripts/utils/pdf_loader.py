@@ -43,13 +43,15 @@ def merge_images_vertically(images):
 
 def convert_pdf_to_single_image(row:pd.Series) -> Image.Image or None:
     """Convierte un pdf a imagenes separados por pagina en una lista"""
-    file =  row["FILE_NAME"] + ".pdf"
+    file =  row["FILE_NAME"].replace(".xml", ".pdf")
+    if not file.lower().endswith(".pdf"):
+        file += ".pdf"
     main = os.path.join(os.getcwd(), "data", "extracted", file)
     if not os.path.exists(main):
         return None
 
     try:
-        image = convert_from_path(main, thread_count=32)
+        image = convert_from_path(main, thread_count=32, dpi=100)
     except PDFPageCountError:
         return None
     # image = (merge_images_vertically(image))
@@ -62,7 +64,7 @@ def convert_pdf_to_images(pdf_path:str) -> list:
     # Convert PDF to images
     for file in os.listdir(pdf_path):
         if file.endswith('.pdf'):
-            image = convert_from_path(os.path.join(pdf_path, file), thread_count=32)
+            image = convert_from_path(os.path.join(pdf_path, file), thread_count=32, dpi=100)
             # images.append((merge_images_vertically(image), SERVER + os.path.basename(file)))
             images.append(image)
     return images
@@ -85,7 +87,7 @@ def make_pdf_dataset(pdf_path:str) -> list[str]:
 
     return dataset
 
-def make_pdf_bytes(row:pd.Series) -> list[str]or None:
+def make_pdf_bytes(row:pd.Series) -> list[str] or np.nan:
     images = convert_pdf_to_single_image(row)
     if images is None:
         return np.nan

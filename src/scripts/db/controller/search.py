@@ -22,7 +22,7 @@ def search_in_table(donde) -> bool:
         return False
 
 def search_file(file_name: str) -> bool:
-    results = search_in_table(db.already_analice_table.c.FILE_NAMES == file_name)
+    results = search_in_table(db.bills_table.c.FILE_NAME == file_name)
     return results
 
 def search_bill(bill: str) -> bool:

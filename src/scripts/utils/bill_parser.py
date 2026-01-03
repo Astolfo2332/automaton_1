@@ -5,6 +5,8 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 import re
+
+from scripts.db.controller.search import search_file
 from src.scripts.db.controller.create import add_a_file, add_a_bill
 from src.scripts.db.controller.search import search_bill
 load_dotenv()
@@ -52,10 +54,10 @@ def parse_xml_to_dataframe(xml_path: str, bills_df:pd.DataFrame) -> None:
     factura = get_alpha_numeric_string(factura)
 
     #Check que la factura no sea un duplicado
-    if not search_bill(factura.lower()):
+    if not search_file(os.path.basename(xml_path)):
         bills_df.loc[len(bills_df)] = [fecha, proveedor, nit, factura, antes_iva,
                                        iva, payable_amount, file, "parser",
-                                       os.path.basename(xml_path).replace(".xml", ""),"NO"]
+                                       os.path.basename(xml_path),"NO"]
 
 def get_value(xpath, namespaces, root, to_type=str, default=np.nan, time=False):
     element = root.find(xpath, namespaces)
@@ -81,7 +83,7 @@ def create_and_save_dataframe(xml_files: list, output_path: str) -> pd.DataFrame
     bills_df["FILE"] = bills_df["FILE"].apply(lambda x: f'=HYPERLINK("{x}", "link")')
     bills_df.to_excel(output_path.replace(".csv", ".xlsx"), index=False)
     bills_df.apply(lambda x: add_a_bill(x), axis=1)
-    bills_df.apply(lambda x: add_a_file(x["FILE_NAME"] + ".xml"), axis=1)
+    # bills_df.apply(lambda x: add_a_file(x["FILE_NAME"] + ".xml"), axis=1)
     print(f"DataFrame saved to {output_path}")
 
     return bills_df

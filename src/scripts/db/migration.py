@@ -25,6 +25,7 @@ def migrate_db():
 
     if conn:
         # Create the bills table
+        print("Deleting existing tables and creating new ones...")
         database.metadata.drop_all(conn)
         database.metadata.create_all(conn)
         # Close the connection
@@ -48,8 +49,12 @@ def migrate_info():
         main = os.getcwd().replace("\\", "/").split("src")[0]
         bills_df = pd.read_csv(os.path.join(main, "data", "bills.csv"))
         bills_df["FECHA"] = pd.to_datetime(bills_df["FECHA"], format="mixed", dayfirst=True).dt.date
+        bills_df["TOTAL"] = bills_df["TOTAL"].str.replace(",", ".").astype(float)
+        bills_df["IVA"] = bills_df["IVA"].str.replace(",", ".").astype(float)
+        bills_df["NIT"] = bills_df["NIT"].astype(str)
+        bills_df["FACTURA"] = bills_df["FACTURA"].astype(str)
+        bills_df["VALOR_ANTES_DE_IVA"] = bills_df["VALOR ANTES DE IVA"].str.replace(",", ".").astype(float)
 
-        bills_df["VALOR_ANTES_DE_IVA"] = bills_df["VALOR ANTES DE IVA"]
         del bills_df["VALOR ANTES DE IVA"]
 
         # Insert data into the bills table
@@ -97,4 +102,4 @@ def migrate_info():
 
 if __name__ == "__main__":
     migrate_db()
-    migrate_info()
+    # migrate_info()
